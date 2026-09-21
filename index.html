@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NirmanTrack - Building Material & Depot Stock Manager</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Inter & Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans Devanagari', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            depot: {
+              50: '#fffbeb',
+              100: '#fef3c7',
+              500: '#f59e0b',
+              600: '#d97706',
+              700: '#b45309',
+              800: '#92400e',
+              900: '#78350f',
+            },
+            slate: {
+              850: '#172033',
+              950: '#0b101b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Mobile-first touch improvements & Custom styling */
+    body {
+      -webkit-tap-highlight-color: transparent;
+    }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .safe-pb {
+      padding-bottom: env(safe-area-inset-bottom, 5rem);
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900 font-sans min-h-screen flex flex-col antialiased selection:bg-amber-500 selection:text-white">
+
+  <!-- Header Bar -->
+  <header class="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-40 shadow-lg">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo & Branding -->
+        <div class="flex items-center space-x-3">
+          <div class="h-10 w-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-xl shadow-md shadow-amber-500/20">
+            <i data-lucide="building-2" class="w-6 h-6 stroke-[2.2]"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-lg sm:text-xl font-black tracking-tight text-white">निर्माण<span class="text-amber-400">Track</span></span>
+              <span class="bg-amber-500/20 text-amber-300 text-[10px] font-bold uppercase px-2 py-0.5 rounded border border-amber-500/30">Depot Pro</span>
+            </div>
+            <p class="text-[11px] text-slate-400 font-medium truncate max-w-[200px] sm:max-w-none">Cement • Gitti • Morang • Sariya • Rings</p>
+          </div>
+        </div>
+
+        <!-- Desktop Navigation Links -->
+        <nav class="hidden md:flex items-center space-x-1">
+          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-tab active px-3.5 py-2 rounded-xl text-sm font-semibold transition flex items-center space-x-2 bg-slate-800 text-white">
+            <i data-lucide="layout-grid" class="w-4 h-4"></i>
+            <span>Live Stock (स्टॉक)</span>
+          </button>
+          <button onclick="switchTab('calculator')" id="nav-calculator" class="nav-tab px-3.5 py-2 rounded-xl text-sm font-semibold transition flex items-center space-x-2 text-slate-300 hover:bg-slate-800/70 hover:text-white">
+            <i data-lucide="calculator" class="w-4 h-4"></i>
+            <span>Trolley CFT Calc (नाप)</span>
+          </button>
+          <button onclick="switchTab('ledger')" id="nav-ledger" class="nav-tab px-3.5 py-2 rounded-xl text-sm font-semibold transition flex items-center space-x-2 text-slate-300 hover:bg-slate-800/70 hover:text-white">
+            <i data-lucide="receipt-text" class="w-4 h-4"></i>
+            <span>Ledger (खाता-बही)</span>
+          </button>
+          <button onclick="switchTab('settings')" id="nav-settings" class="nav-tab px-3.5 py-2 rounded-xl text-sm font-semibold transition flex items-center space-x-2 text-slate-300 hover:bg-slate-800/70 hover:text-white">
+            <i data-lucide="settings-2" class="w-4 h-4"></i>
+            <span>Settings & Backup</span>
+          </button>
+        </nav>
+
+        <!-- Header Quick Action Buttons -->
+        <div class="flex items-center space-x-2">
+          <button onclick="openModal('modalStockIn')" class="inline-flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-sm transition">
+            <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
+            <span>आवक (IN)</span>
+          </button>
+          <button onclick="openModal('modalStockOut')" class="inline-flex items-center space-x-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl text-xs sm:text-sm font-black shadow-sm transition">
+            <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+            <span>जावक (OUT)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Wrapper -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 safe-pb">
+
+    <!-- Toast Notification Banner -->
+    <div id="toastNotification" class="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 transform transition-all duration-300 translate-y-24 opacity-0 pointer-events-none max-w-sm w-[90%] sm:w-full bg-slate-950 text-white rounded-2xl shadow-2xl p-4 border border-slate-800 flex items-start space-x-3">
+      <div id="toastIcon" class="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0 mt-0.5">
+        <i data-lucide="check-circle" class="w-5 h-5"></i>
+      </div>
+      <div class="flex-1">
+        <h4 id="toastTitle" class="text-xs sm:text-sm font-bold text-slate-100">Operation Success</h4>
+        <p id="toastMessage" class="text-[11px] sm:text-xs text-slate-400 mt-0.5 leading-snug">Stock records have been updated.</p>
+      </div>
+      <button onclick="hideToast()" class="text-slate-500 hover:text-white p-1">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- Alert Banner for Low Stock Materials -->
+    <div id="lowStockBanner" class="hidden mb-5 bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-transparent border-l-4 border-rose-500 p-4 rounded-r-2xl bg-white shadow-sm">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="p-2 rounded-xl bg-rose-100 text-rose-600">
+            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-xs sm:text-sm font-bold text-slate-900">कम स्टॉक चेतावनी (Low Stock Alert)</h3>
+            <p id="lowStockDetails" class="text-[11px] sm:text-xs text-slate-600 mt-0.5">Few materials require replenishment immediately.</p>
+          </div>
+        </div>
+        <button onclick="filterLowStock()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 ml-2">
+          Check Items
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 1: LIVE STOCK DASHBOARD -->
+    <section id="tab-dashboard" class="tab-content space-y-6">
+
+      <!-- Depot Overview Stats Grid -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        
+        <!-- Cement Summary -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold tracking-wider text-slate-500 uppercase">सीमेंट (Cement)</span>
+            <div class="p-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
+              <i data-lucide="archive" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-baseline justify-between">
+            <h2 id="kpiCementBags" class="text-2xl sm:text-3xl font-black text-slate-900 font-mono">0</h2>
+            <span class="text-xs font-bold text-slate-500">बोरी (Bags)</span>
+          </div>
+          <div class="mt-2 text-[11px] text-slate-500 flex items-center justify-between font-medium">
+            <span>Tonnage:</span>
+            <span id="kpiCementMT" class="font-bold text-amber-700 font-mono">0.00 MT</span>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 h-1 bg-amber-500"></div>
+        </div>
+
+        <!-- Aggregate / Gitti Summary -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold tracking-wider text-slate-500 uppercase">गिट्टी (1/2" + 1/4")</span>
+            <div class="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+              <i data-lucide="mountain" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-baseline justify-between">
+            <h2 id="kpiGittiCFT" class="text-2xl sm:text-3xl font-black text-slate-900 font-mono">0</h2>
+            <span class="text-xs font-bold text-slate-500">CFT (फुट)</span>
+          </div>
+          <div class="mt-2 text-[11px] text-slate-500 flex items-center justify-between font-medium">
+            <span>Brass (सैकड़ा):</span>
+            <span id="kpiGittiBrass" class="font-bold text-blue-700 font-mono">0.00 Brass</span>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 h-1 bg-blue-500"></div>
+        </div>
+
+        <!-- Morang / Sand Summary -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold tracking-wider text-slate-500 uppercase">मोरंग (Morang Sand)</span>
+            <div class="p-2 rounded-xl bg-orange-50 text-orange-600 border border-orange-100">
+              <i data-lucide="waves" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-baseline justify-between">
+            <h2 id="kpiMorangCFT" class="text-2xl sm:text-3xl font-black text-slate-900 font-mono">0</h2>
+            <span class="text-xs font-bold text-slate-500">CFT (फुट)</span>
+          </div>
+          <div class="mt-2 text-[11px] text-slate-500 flex items-center justify-between font-medium">
+            <span>Brass (सैकड़ा):</span>
+            <span id="kpiMorangBrass" class="font-bold text-orange-700 font-mono">0.00 Brass</span>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 h-1 bg-orange-500"></div>
+        </div>
+
+        <!-- Sariya / TMT Summary -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold tracking-wider text-slate-500 uppercase">सरिया (TMT Rebar)</span>
+            <div class="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+              <i data-lucide="boxes" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-baseline justify-between">
+            <h2 id="kpiSariyaKG" class="text-2xl sm:text-3xl font-black text-slate-900 font-mono">0</h2>
+            <span class="text-xs font-bold text-slate-500">KG (किलो)</span>
+          </div>
+          <div class="mt-2 text-[11px] text-slate-500 flex items-center justify-between font-medium">
+            <span>Tonnage / Quintal:</span>
+            <span id="kpiSariyaMT" class="font-bold text-emerald-700 font-mono">0.00 Quintal</span>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500"></div>
+        </div>
+
+      </div>
+
+      <!-- Live Materials Cards Grid Header & Filters -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-black text-slate-900 flex items-center gap-2">
+            <i data-lucide="layers" class="w-5 h-5 text-amber-500"></i>
+            <span>सामग्री स्टॉक स्थिति (Live Material Stock)</span>
+          </h2>
+          <p class="text-xs text-slate-500">Continuous live count with multi-unit auto conversions</p>
+        </div>
+
+        <!-- Category Selector -->
+        <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs font-semibold">
+          <button onclick="filterCategory('ALL')" class="category-btn active px-3 py-1.5 rounded-xl bg-slate-900 text-white shadow-sm transition" data-category="ALL">All (सभी)</button>
+          <button onclick="filterCategory('Cement')" class="category-btn px-3 py-1.5 rounded-xl bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition" data-category="Cement">सीमेंट</button>
+          <button onclick="filterCategory('Gitti')" class="category-btn px-3 py-1.5 rounded-xl bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition" data-category="Gitti">गिट्टी</button>
+          <button onclick="filterCategory('Morang')" class="category-btn px-3 py-1.5 rounded-xl bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition" data-category="Morang">मोरंग</button>
+          <button onclick="filterCategory('Sariya')" class="category-btn px-3 py-1.5 rounded-xl bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition" data-category="Sariya">सरिया</button>
+          <button onclick="filterCategory('Ring')" class="category-btn px-3 py-1.5 rounded-xl bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition" data-category="Ring">रिंग/छल्ला</button>
+        </div>
+      </div>
+
+      <!-- Grid of Material Cards -->
+      <div id="materialsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Injected Dynamically by JavaScript -->
+      </div>
+
+    </section>
+
+    <!-- TAB 2: TROLLEY & TRUCK CFT CALCULATOR -->
+    <section id="tab-calculator" class="tab-content hidden space-y-6">
+      <div class="bg-white rounded-3xl p-5 sm:p-8 border border-slate-200 shadow-sm max-w-3xl mx-auto">
+        
+        <div class="flex items-center space-x-3 pb-5 border-b border-slate-100">
+          <div class="h-12 w-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+            <i data-lucide="truck" class="w-7 h-7"></i>
+          </div>
+          <div>
+            <h2 class="text-base sm:text-lg font-black text-slate-900">ट्रॉली / डम्पर नाप कैलकुलेटर (CFT & Brass)</h2>
+            <p class="text-xs text-slate-500">Calculate exact cubic feet & brass from vehicle dimensions (Feet & Inches)</p>
+          </div>
+        </div>
+
+        <form id="trolleyCalcForm" oninput="calculateVehicleCFT()" class="mt-6 space-y-5">
+          <!-- Length Input -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <i data-lucide="ruler" class="w-4 h-4 text-amber-600"></i>
+              <span>लम्बाई (Length - L)</span>
+            </label>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <span class="text-[11px] text-slate-500 block mb-1">Feet (फुट)</span>
+                <input type="number" id="calcLenFeet" value="10" min="0" step="1" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm font-mono font-bold focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+              <div>
+                <span class="text-[11px] text-slate-500 block mb-1">Inches (इंच 0-11)</span>
+                <input type="number" id="calcLenInch" value="0" min="0" max="11" step="1" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm font-mono font-bold focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+            </div>
+          </div>
+
+          <!-- Width Input -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <i data-lucide="ruler" class="w-4 h-4 text-amber-600"></i>
+              <span>चौड़ाई (Width - W)</span>
+            </label>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <span class="text-[11px] text-slate-500 block mb-1">Feet (फुट)</span>
+                <input type="number" id="calcWidthFeet" value="6" min="0" step="1" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm font-mono font-bold focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+              <div>
+                <span class="text-[11px] text-slate-500 block mb-1">Inches (इंच 0-11)</span>
+                <input type="number" id="calcWidthInch" value="0" min="0" max="11" step="1" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm font-mono font-bold focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+            </div>
+          </div>
+
+          <!-- Height Input -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <i data-lucide="ruler" class="w-4 h-4 text-amber-600"></i>
+              <span>ऊंचाई / भराई (Height - H)</span>
+            </label>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <span class="text-[11px] text-slate-500 block mb-1">Feet (फुट)</span>
+                <input type="number" id="calcHeightFeet" value="2" min="0" step="1" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm font-mono font-bold focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+              <div>
+                <span class="text-[11px] text-slate-500 block mb-1">Inches (इंच 0-11)</span>
+                <input type="number" id="calcHeightInch" value="0" min="0" max="11" step="1" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm font-mono font-bold focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+            </div>
+          </div>
+
+          <!-- Calculation Result Card -->
+          <div class="bg-gradient-to-br from-slate-900 to-slate-850 text-white rounded-2xl p-5 shadow-lg space-y-4">
+            <div class="flex items-center justify-between text-xs text-slate-400 pb-2 border-b border-slate-800">
+              <span>Formula: (L × W × H) in Inches ÷ 1728</span>
+              <span class="font-mono text-amber-400">100 CFT = 1 Brass (सैकड़ा)</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 text-center">
+              <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700">
+                <span class="text-xs text-slate-400 block mb-1">Total Volume (CFT)</span>
+                <div id="calcResultCFT" class="text-3xl font-black text-amber-400 font-mono">120.00</div>
+                <span class="text-[11px] text-slate-400">घन फुट (CFT)</span>
+              </div>
+              <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700">
+                <span class="text-xs text-slate-400 block mb-1">Volume in Brass</span>
+                <div id="calcResultBrass" class="text-3xl font-black text-sky-400 font-mono">1.20</div>
+                <span class="text-[11px] text-slate-400">Brass (सैकड़ा)</span>
+              </div>
+            </div>
+
+            <!-- Transfer to Stock In Action -->
+            <div class="pt-2 flex flex-col sm:flex-row gap-2.5">
+              <button type="button" onclick="transferCalcToStock('IN')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs sm:text-sm transition flex items-center justify-center space-x-2">
+                <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
+                <span>Use Value in Stock IN (आवक में भरें)</span>
+              </button>
+              <button type="button" onclick="transferCalcToStock('OUT')" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 rounded-xl text-xs sm:text-sm transition flex items-center justify-center space-x-2">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span>Use Value in Stock OUT (जावक में भरें)</span>
+              </button>
+            </div>
+          </div>
+        </form>
+
+      </div>
+    </section>
+
+    <!-- TAB 3: TRANSACTION LEDGER -->
+    <section id="tab-ledger" class="tab-content hidden space-y-4">
+      
+      <!-- Filter and Action Bar -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+          <!-- Type Filter -->
+          <select id="ledgerFilterType" onchange="renderLedgerTable()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500">
+            <option value="ALL">All Movements (सभी आवक/जावक)</option>
+            <option value="IN">आवक (Stock IN)</option>
+            <option value="OUT">जावक (Stock OUT)</option>
+          </select>
+
+          <!-- Material Filter -->
+          <select id="ledgerFilterMaterial" onchange="renderLedgerTable()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500">
+            <option value="ALL">All Materials (सभी सामग्री)</option>
+            <!-- Injected -->
+          </select>
+        </div>
+
+        <!-- Export & Options -->
+        <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
+          <button onclick="exportLedgerCSV()" class="inline-flex items-center space-x-1.5 bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm transition">
+            <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i>
+            <span>Export CSV / Excel</span>
+          </button>
+          <button onclick="clearLedgerHistory()" class="inline-flex items-center space-x-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-2 rounded-xl text-xs font-bold transition">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <span>Clear Logs</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Ledger Table Container -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+              <tr>
+                <th class="py-3 px-3">Date / Time</th>
+                <th class="py-3 px-2 text-center">Type</th>
+                <th class="py-3 px-3">सामग्री (Material)</th>
+                <th class="py-3 px-3 text-right">Quantity</th>
+                <th class="py-3 px-3 text-right">Stock After</th>
+                <th class="py-3 px-3">पार्टी / ग्राहक (Party/Site)</th>
+                <th class="py-3 px-3">गाड़ी / वाहन (Vehicle)</th>
+                <th class="py-3 px-3">Challan / Pass</th>
+                <th class="py-3 px-3">Notes</th>
+              </tr>
+            </thead>
+            <tbody id="ledgerTableBody" class="divide-y divide-slate-100">
+              <!-- Dynamically Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 4: SETTINGS & BACKUP -->
+    <section id="tab-settings" class="tab-content hidden space-y-6 max-w-4xl mx-auto">
+      
+      <!-- Backup & Restore -->
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-5">
+        <div class="flex items-center space-x-3 pb-4 border-b border-slate-100">
+          <div class="p-2.5 rounded-2xl bg-sky-100 text-sky-700">
+            <i data-lucide="database" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">डेटा बैकअप एवं रीस्टोर (Data Backup & Restore)</h3>
+            <p class="text-xs text-slate-500">All data is preserved safely in your browser LocalStorage for GitHub Pages.</p>
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Create an offline JSON file of your entire inventory balances, stock history, and depot ledger. You can transfer this backup to another mobile, tablet, or PC anytime without needing a server.
+        </p>
+
+        <div class="flex flex-wrap items-center gap-3 pt-2">
+          <button onclick="downloadBackupJSON()" class="inline-flex items-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow transition">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Export JSON Backup (डाउनलोड बैकअप)</span>
+          </button>
+
+          <label class="inline-flex items-center space-x-2 bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-2.5 rounded-xl text-xs font-bold border border-slate-300 cursor-pointer transition">
+            <i data-lucide="upload" class="w-4 h-4"></i>
+            <span>Restore JSON (बैकअप लोड करें)</span>
+            <input type="file" id="restoreFileInput" accept=".json" onchange="restoreBackupJSON(event)" class="hidden">
+          </label>
+        </div>
+
+        <div class="pt-5 border-t border-slate-100 flex flex-wrap gap-2.5">
+          <button onclick="resetToDefaultData()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-300 transition">
+            Load Demo Godown Data
+          </button>
+          <button onclick="clearAllData()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3.5 py-2 rounded-xl text-xs font-bold transition">
+            Wipe All Records
+          </button>
+        </div>
+      </div>
+
+      <!-- Unit Reference Guide for Indian Building Depot -->
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+          <div class="p-2.5 rounded-2xl bg-amber-100 text-amber-800">
+            <i data-lucide="book-open" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">मानक इकाई गाइड (Standard Depot Conversions)</h3>
+            <p class="text-xs text-slate-500">Standard Indian construction calculation rules</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600">
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="font-bold text-slate-900 block mb-1">सीमेंट (Cement Standard):</span>
+            1 बोरी (Bag) = 50 KG net.<br>
+            20 बोरी = 1 Metric Ton (10 Quintal).
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="font-bold text-slate-900 block mb-1">गिट्टी व मोरंग (Gitti & Sand Volume):</span>
+            1 Brass (सैकड़ा) = 100 Cubic Feet (CFT).<br>
+            1 Trolley = Approx 90 to 140 CFT.
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="font-bold text-slate-900 block mb-1">सरिया (TMT Rebar):</span>
+            3 सूत = 10 mm (approx 0.617 kg/meter).<br>
+            4 सूत = 12 mm (approx 0.888 kg/meter).<br>
+            100 KG = 1 Quintal | 1000 KG = 1 Metric Ton.
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="font-bold text-slate-900 block mb-1">मेटल रिंग / टाई छल्ला (Stirrups):</span>
+            Type 7 (7"x7", 7"x9" कॉलम/बीम).<br>
+            Type 3 (3"x7" लिंटेल/छज्जा).<br>
+            Type 12 (12" रिंग/स्पेशल फ्रेम).
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- App-like Mobile Bottom Navigation Bar -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900 border-t border-slate-800 text-slate-400 px-2 py-1.5 flex justify-around items-center shadow-2xl">
+    <button onclick="switchTab('dashboard')" class="mobile-nav-btn active text-amber-400 flex flex-col items-center py-1 px-3 text-[10px] font-bold" data-target="dashboard">
+      <i data-lucide="layout-grid" class="w-5 h-5 mb-0.5"></i>
+      <span>स्टॉक</span>
+    </button>
+    <button onclick="switchTab('calculator')" class="mobile-nav-btn flex flex-col items-center py-1 px-3 text-[10px] font-bold" data-target="calculator">
+      <i data-lucide="calculator" class="w-5 h-5 mb-0.5"></i>
+      <span>नाप (CFT)</span>
+    </button>
+    <button onclick="switchTab('ledger')" class="mobile-nav-btn flex flex-col items-center py-1 px-3 text-[10px] font-bold" data-target="ledger">
+      <i data-lucide="receipt-text" class="w-5 h-5 mb-0.5"></i>
+      <span>खाता</span>
+    </button>
+    <button onclick="switchTab('settings')" class="mobile-nav-btn flex flex-col items-center py-1 px-3 text-[10px] font-bold" data-target="settings">
+      <i data-lucide="settings" class="w-5 h-5 mb-0.5"></i>
+      <span>सेटिंग</span>
+    </button>
+  </nav>
+
+  <!-- MODAL 1: STOCK IN (आवक / माल आया) -->
+  <div id="modalStockIn" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between pb-3.5 border-b border-slate-100">
+        <div class="flex items-center space-x-2.5">
+          <div class="p-2 rounded-xl bg-emerald-100 text-emerald-700">
+            <i data-lucide="arrow-down-left" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-slate-900 text-base">स्टॉक आवक (Stock IN / Receipt)</h3>
+            <p class="text-[11px] text-slate-500">Add received materials from supplier/truck</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modalStockIn')" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleTransactionSubmit(event, 'IN')" class="mt-4 space-y-3.5 text-xs sm:text-sm">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">सामग्री चुनें (Select Material) *</label>
+          <select id="modalInMaterialSelect" required onchange="handleModalUnitUpdate('modalInMaterialSelect', 'modalInUnitLabel')" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white focus:outline-none">
+            <!-- Injected dynamically -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">मात्रा (Quantity) * <span id="modalInUnitLabel" class="text-emerald-600 font-mono"></span></label>
+            <input type="number" id="modalInQty" min="0.1" step="any" required placeholder="दर्ज करें (Qty)" 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 font-mono font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:bg-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">चालान / रसीद नं. (Challan No)</label>
+            <input type="text" id="modalInRef" placeholder="CH-2026-09" 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:bg-white focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">सप्लायर / क्रशर / प्लांट</label>
+            <input type="text" id="modalInParty" placeholder="Supplier / Mining Plant" 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:bg-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">गाड़ी / डम्पर / ट्रॉली नं.</label>
+            <input type="text" id="modalInVehicle" placeholder="UP-78-BT-1122" 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 uppercase font-mono focus:ring-2 focus:ring-emerald-500 focus:bg-white focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">टिप्पणी / विवरण (Notes)</label>
+          <input type="text" id="modalInNotes" placeholder="Yard 1 unloading, batch #4" 
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:bg-white focus:outline-none">
+        </div>
+
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalStockIn')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition">रद्द करें (Cancel)</button>
+          <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl shadow transition">आवक दर्ज करें (Confirm IN)</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- MODAL 2: STOCK OUT (जावक / माल बिका / साइट डिलीवरी) -->
+  <div id="modalStockOut" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between pb-3.5 border-b border-slate-100">
+        <div class="flex items-center space-x-2.5">
+          <div class="p-2 rounded-xl bg-amber-100 text-amber-800">
+            <i data-lucide="arrow-up-right" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-slate-900 text-base">स्टॉक जावक (Stock OUT / Sale)</h3>
+            <p class="text-[11px] text-slate-500">Dispatch material for customer sale or site delivery</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modalStockOut')" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleTransactionSubmit(event, 'OUT')" class="mt-4 space-y-3.5 text-xs sm:text-sm">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">सामग्री चुनें (Select Material) *</label>
+          <select id="modalOutMaterialSelect" required onchange="handleModalUnitUpdate('modalOutMaterialSelect', 'modalOutUnitLabel')" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none">
+            <!-- Injected dynamically -->
+          </select>
+          <span id="modalOutStockHint" class="text-[11px] text-amber-700 font-medium mt-1 block"></span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">मात्रा (Quantity) * <span id="modalOutUnitLabel" class="text-amber-600 font-mono"></span></label>
+            <input type="number" id="modalOutQty" min="0.1" step="any" required placeholder="Qty" 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 font-mono font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">बिल / गेट पास नं. (Bill / Gate Pass)</label>
+            <input type="text" id="modalOutRef" placeholder="GP-8831" 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">ग्राहक / साइट का नाम (Customer/Site)</label>
+            <input type="text" id="modalOutParty" placeholder="Gupta Ji / Sector 4 Site" 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">गाड़ी / ऑटो / ट्रॉली नं.</label>
+            <input type="text" id="modalOutVehicle" placeholder="Tractor / Auto 991" 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 uppercase font-mono focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">विवरण / रीमार्क (Notes)</label>
+          <input type="text" id="modalOutNotes" placeholder="Paid by UPI / Site Delivery" 
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none">
+        </div>
+
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalStockOut')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition">रद्द करें (Cancel)</button>
+          <button type="submit" class="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow transition">जावक दर्ज करें (Confirm OUT)</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION CORE -->
+  <script>
+    // Storage Keys
+    const STORAGE_KEY_ITEMS = 'nirman_materials_v1';
+    const STORAGE_KEY_LEDGER = 'nirman_ledger_v1';
+
+    // Defined Materials with industry calculations
+    const INITIAL_MATERIALS = [
+      {
+        id: 'mat_cement',
+        nameEn: 'Cement',
+        nameHi: 'सीमेंट (50kg बोरी)',
+        category: 'Cement',
+        primaryUnit: 'Bags',
+        primaryUnitHi: 'बोरी',
+        stock: 350,
+        minAlert: 50,
+        icon: 'archive',
+        secondaryCalc: (stock) => `${(stock / 20).toFixed(2)} Metric Ton (MT)`
+      },
+      {
+        id: 'mat_gitti_half',
+        nameEn: '1/2 inch Gitti',
+        nameHi: '1/2" आधा इंच गिट्टी (Coarse Aggregate)',
+        category: 'Gitti',
+        primaryUnit: 'CFT',
+        primaryUnitHi: 'फुट (CFT)',
+        stock: 480,
+        minAlert: 100,
+        icon: 'mountain',
+        secondaryCalc: (stock) => `${(stock / 100).toFixed(2)} Brass (सैकड़ा)`
+      },
+      {
+        id: 'mat_gitti_quarter',
+        nameEn: '1/4 inch Gitti',
+        nameHi: '1/4" पाव इंच / जीरा गिट्टी',
+        category: 'Gitti',
+        primaryUnit: 'CFT',
+        primaryUnitHi: 'फुट (CFT)',
+        stock: 120,
+        minAlert: 100,
+        icon: 'mountain',
+        secondaryCalc: (stock) => `${(stock / 100).toFixed(2)} Brass (सैकड़ा)`
+      },
+      {
+        id: 'mat_morang_mota',
+        nameEn: 'Mota Morang',
+        nameHi: 'मोटा मोरंग (Coarse River Sand)',
+        category: 'Morang',
+        primaryUnit: 'CFT',
+        primaryUnitHi: 'फुट (CFT)',
+        stock: 620,
+        minAlert: 150,
+        icon: 'waves',
+        secondaryCalc: (stock) => `${(stock / 100).toFixed(2)} Brass (सैकड़ा)`
+      },
+      {
+        id: 'mat_morang_maheen',
+        nameEn: 'Maheen Morang',
+        nameHi: 'महीन मोरंग (Fine Plaster Sand)',
+        category: 'Morang',
+        primaryUnit: 'CFT',
+        primaryUnitHi: 'फुट (CFT)',
+        stock: 310,
+        minAlert: 100,
+        icon: 'waves',
+        secondaryCalc: (stock) => `${(stock / 100).toFixed(2)} Brass (सैकड़ा)`
+      },
+      {
+        id: 'mat_sariya_3sut',
+        nameEn: 'Sariya 3 Soot',
+        nameHi: 'सरिया 3 सूत (10mm TMT Rebar)',
+        category: 'Sariya',
+        primaryUnit: 'KG',
+        primaryUnitHi: 'किलो (KG)',
+        stock: 2400,
+        minAlert: 500,
+        icon: 'boxes',
+        secondaryCalc: (stock) => `${(stock / 100).toFixed(2)} Qnt | ${(stock / 1000).toFixed(2)} MT`
+      },
+      {
+        id: 'mat_sariya_4sut',
+        nameEn: 'Sariya 4 Soot',
+        nameHi: 'सरिया 4 सूत (12mm TMT Rebar)',
+        category: 'Sariya',
+        primaryUnit: 'KG',
+        primaryUnitHi: 'किलो (KG)',
+        stock: 3150,
+        minAlert: 600,
+        icon: 'boxes',
+        secondaryCalc: (stock) => `${(stock / 100).toFixed(2)} Qnt | ${(stock / 1000).toFixed(2)} MT`
+      },
+      {
+        id: 'mat_ring_type3',
+        nameEn: 'Metal Ring Type 3',
+        nameHi: 'मेटल रिंग Type 3 (3"x7" लिंटेल)',
+        category: 'Ring',
+        primaryUnit: 'Pcs',
+        primaryUnitHi: 'पीस (Pcs)',
+        stock: 450,
+        minAlert: 100,
+        icon: 'circle-dot',
+        secondaryCalc: (stock) => `${Math.floor(stock / 25)} बंडल (Bundles of 25)`
+      },
+      {
+        id: 'mat_ring_type7',
+        nameEn: 'Metal Ring Type 7',
+        nameHi: 'मेटल रिंग Type 7 (7"x7" / 7"x9" कॉलम)',
+        category: 'Ring',
+        primaryUnit: 'Pcs',
+        primaryUnitHi: 'पीस (Pcs)',
+        stock: 90, // Triggers alert
+        minAlert: 150,
+        icon: 'circle-dot',
+        secondaryCalc: (stock) => `${Math.floor(stock / 25)} बंडल (Bundles of 25)`
+      },
+      {
+        id: 'mat_ring_type12',
+        nameEn: 'Metal Ring Type 12',
+        nameHi: 'मेटल रिंग Type 12 (12" रिंग/स्पेशल)',
+        category: 'Ring',
+        primaryUnit: 'Pcs',
+        primaryUnitHi: 'पीस (Pcs)',
+        stock: 220,
+        minAlert: 80,
+        icon: 'circle-dot',
+        secondaryCalc: (stock) => `${Math.floor(stock / 25)} बंडल (Bundles of 25)`
+      }
+    ];
+
+    const INITIAL_LEDGER = [
+      {
+        id: 'led_1',
+        timestamp: new Date(Date.now() - 3600000 * 4).toISOString(),
+        materialId: 'mat_cement',
+        materialName: 'सीमेंट (50kg बोरी)',
+        type: 'IN',
+        qty: 200,
+        unit: 'Bags',
+        balance: 350,
+        party: 'UltraTech Depot',
+        vehicle: 'UP-78-T-9812',
+        ref: 'CH-4091',
+        notes: 'Godown 1 loaded'
+      },
+      {
+        id: 'led_2',
+        timestamp: new Date(Date.now() - 3600000 * 2.5).toISOString(),
+        materialId: 'mat_gitti_half',
+        materialName: '1/2" आधा इंच गिट्टी',
+        type: 'IN',
+        qty: 250,
+        unit: 'CFT',
+        balance: 480,
+        party: 'Kabrai Stone Crusher',
+        vehicle: 'UP-93-E-4421',
+        ref: 'TR-102',
+        notes: '2.5 Brass Dumper arrival'
+      },
+      {
+        id: 'led_3',
+        timestamp: new Date(Date.now() - 3600000 * 1).toISOString(),
+        materialId: 'mat_sariya_3sut',
+        materialName: 'सरिया 3 सूत (10mm)',
+        type: 'OUT',
+        qty: 600,
+        unit: 'KG',
+        balance: 2400,
+        party: 'Verma Builders (Site A)',
+        vehicle: 'Trolley 44',
+        ref: 'BILL-882',
+        notes: 'Slab reinforcement dispatch'
+      }
+    ];
+
+    // State Variables
+    let materials = [];
+    let ledger = [];
+    let selectedCategory = 'ALL';
+
+    // Application Load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStorageData();
+      renderAll();
+      calculateVehicleCFT();
+      lucide.createIcons();
+    });
+
+    function loadStorageData() {
+      try {
+        const storedMats = localStorage.getItem(STORAGE_KEY_ITEMS);
+        const storedLedger = localStorage.getItem(STORAGE_KEY_LEDGER);
+
+        materials = storedMats ? JSON.parse(storedMats) : [...INITIAL_MATERIALS];
+        ledger = storedLedger ? JSON.parse(storedLedger) : [...INITIAL_LEDGER];
+      } catch (err) {
+        console.error('LocalStorage load error', err);
+        materials = [...INITIAL_MATERIALS];
+        ledger = [...INITIAL_LEDGER];
+      }
+    }
+
+    function saveStorageData() {
+      try {
+        localStorage.setItem(STORAGE_KEY_ITEMS, JSON.stringify(materials));
+        localStorage.setItem(STORAGE_KEY_LEDGER, JSON.stringify(ledger));
+      } catch (err) {
+        console.error('LocalStorage write error', err);
+        showToast('Error', 'Storage full or disabled.', 'error');
+      }
+    }
+
+    // Tab Navigation
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      const target = document.getElementById(`tab-${tabId}`);
+      if (target) target.classList.remove('hidden');
+
+      // Desktop Nav Links
+      document.querySelectorAll('.nav-tab').forEach(b => {
+        b.classList.remove('active', 'bg-slate-800', 'text-white');
+        b.classList.add('text-slate-300');
+      });
+      const currentTab = document.getElementById(`nav-${tabId}`);
+      if (currentTab) {
+        currentTab.classList.add('active', 'bg-slate-800', 'text-white');
+        currentTab.classList.remove('text-slate-300');
+      }
+
+      // Mobile Bottom Bar
+      document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+        btn.classList.remove('text-amber-400');
+        if (btn.getAttribute('data-target') === tabId) {
+          btn.classList.add('text-amber-400');
+        }
+      });
+
+      renderAll();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Render Master
+    function renderAll() {
+      renderDashboardCards();
+      populateMaterialDropdowns();
+      renderLedgerTable();
+      checkLowStockAlerts();
+      lucide.createIcons();
+    }
+
+    // Filter by Category
+    function filterCategory(cat) {
+      selectedCategory = cat;
+      document.querySelectorAll('.category-btn').forEach(btn => {
+        if (btn.getAttribute('data-category') === cat) {
+          btn.className = 'category-btn active px-3 py-1.5 rounded-xl bg-slate-900 text-white shadow-sm transition font-bold';
+        } else {
+          btn.className = 'category-btn px-3 py-1.5 rounded-xl bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition font-medium';
+        }
+      });
+      renderDashboardCards();
+    }
+
+    function filterLowStock() {
+      switchTab('dashboard');
+      selectedCategory = 'ALL';
+      document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('bg-slate-900', 'text-white');
+        btn.classList.add('bg-white', 'text-slate-700');
+      });
+      renderDashboardCards(true);
+    }
+
+    function renderDashboardCards(showOnlyLow = false) {
+      // 1. Calculate Top KPI Bar
+      const cementItem = materials.find(m => m.id === 'mat_cement');
+      const cementStock = cementItem ? cementItem.stock : 0;
+      document.getElementById('kpiCementBags').innerText = Number(cementStock).toLocaleString();
+      document.getElementById('kpiCementMT').innerText = `${(cementStock / 20).toFixed(2)} MT`;
+
+      const gittiHalf = materials.find(m => m.id === 'mat_gitti_half')?.stock || 0;
+      const gittiQtr = materials.find(m => m.id === 'mat_gitti_quarter')?.stock || 0;
+      const totalGitti = gittiHalf + gittiQtr;
+      document.getElementById('kpiGittiCFT').innerText = totalGitti.toLocaleString();
+      document.getElementById('kpiGittiBrass').innerText = `${(totalGitti / 100).toFixed(2)} Brass`;
+
+      const morangMota = materials.find(m => m.id === 'mat_morang_mota')?.stock || 0;
+      const morangMah = materials.find(m => m.id === 'mat_morang_maheen')?.stock || 0;
+      const totalMorang = morangMota + morangMah;
+      document.getElementById('kpiMorangCFT').innerText = totalMorang.toLocaleString();
+      document.getElementById('kpiMorangBrass').innerText = `${(totalMorang / 100).toFixed(2)} Brass`;
+
+      const sariya3 = materials.find(m => m.id === 'mat_sariya_3sut')?.stock || 0;
+      const sariya4 = materials.find(m => m.id === 'mat_sariya_4sut')?.stock || 0;
+      const totalSariya = sariya3 + sariya4;
+      document.getElementById('kpiSariyaKG').innerText = totalSariya.toLocaleString();
+      document.getElementById('kpiSariyaMT').innerText = `${(totalSariya / 100).toFixed(1)} Qnt (${(totalSariya / 1000).toFixed(2)} MT)`;
+
+      // 2. Render Cards Grid
+      const container = document.getElementById('materialsGrid');
+      container.innerHTML = '';
+
+      const filtered = materials.filter(m => {
+        if (showOnlyLow) return m.stock <= m.minAlert;
+        if (selectedCategory === 'ALL') return true;
+        return m.category === selectedCategory;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
+            <i data-lucide="package-search" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
+            <p class="font-bold text-sm">No items found in this filter.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      filtered.forEach(mat => {
+        const isLow = Number(mat.stock) <= Number(mat.minAlert);
+        const isOut = Number(mat.stock) <= 0;
+
+        // Dynamic Secondary conversion text
+        let secondaryText = '';
+        if (mat.id === 'mat_cement') {
+          secondaryText = `${(mat.stock / 20).toFixed(2)} Metric Ton (20 Bags = 1 MT)`;
+        } else if (mat.category === 'Gitti' || mat.category === 'Morang') {
+          secondaryText = `${(mat.stock / 100).toFixed(2)} Brass (100 CFT = 1 Brass)`;
+        } else if (mat.category === 'Sariya') {
+          secondaryText = `${(mat.stock / 100).toFixed(2)} Quintal | ${(mat.stock / 1000).toFixed(2)} MT`;
+        } else if (mat.category === 'Ring') {
+          secondaryText = `Approx ${Math.floor(mat.stock / 25)} Bundles (25 pcs/bundle)`;
+        }
+
+        const card = document.createElement('div');
+        card.className = `bg-white rounded-3xl p-5 border ${isLow ? 'border-rose-400 ring-2 ring-rose-300/40' : 'border-slate-200/90'} shadow-sm flex flex-col justify-between transition-all hover:shadow-md`;
+        
+        card.innerHTML = `
+          <div>
+            <!-- Card Header -->
+            <div class="flex items-start justify-between">
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${getCategoryBadge(mat.category)}">
+                  ${mat.category}
+                </span>
+                <h3 class="text-base font-extrabold text-slate-900 mt-1.5 leading-tight">${mat.nameHi}</h3>
+                <span class="text-xs text-slate-400 font-medium">${mat.nameEn}</span>
+              </div>
+              <div class="p-2.5 rounded-2xl bg-slate-50 text-slate-700 border border-slate-100">
+                <i data-lucide="${mat.icon || 'box'}" class="w-5 h-5 text-amber-600"></i>
+              </div>
+            </div>
+
+            <!-- Live Stock Level Box -->
+            <div class="mt-4 p-3.5 rounded-2xl ${isLow ? 'bg-rose-50 border border-rose-200' : 'bg-slate-50 border border-slate-100'}">
+              <div class="flex items-baseline justify-between">
+                <div>
+                  <span class="text-3xl font-black font-mono tracking-tight ${isLow ? 'text-rose-600' : 'text-slate-900'}">
+                    ${Number(mat.stock).toLocaleString()}
+                  </span>
+                  <span class="text-xs font-bold text-slate-600 ml-1.5">${mat.primaryUnitHi}</span>
+                </div>
+                ${isLow 
+                  ? `<span class="bg-rose-100 text-rose-700 text-[10px] font-black uppercase px-2 py-0.5 rounded-md">Low Stock</span>` 
+                  : `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase px-2 py-0.5 rounded-md">Available</span>`}
+              </div>
+
+              <!-- Secondary Unit Equivalent -->
+              <div class="mt-2 pt-2 border-t ${isLow ? 'border-rose-200/80' : 'border-slate-200/80'} text-[11px] font-semibold text-slate-600 flex items-center justify-between">
+                <span>Equivalent:</span>
+                <span class="font-mono font-bold ${isLow ? 'text-rose-800' : 'text-slate-800'}">${secondaryText}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Row -->
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
+            <button onclick="triggerQuickAction('${mat.id}', 'IN')" class="flex-1 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white font-black text-xs transition flex items-center justify-center space-x-1 border border-emerald-200">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>आवक (IN)</span>
+            </button>
+            <button onclick="triggerQuickAction('${mat.id}', 'OUT')" class="flex-1 py-2 rounded-xl bg-amber-50 hover:bg-amber-500 text-amber-800 hover:text-slate-950 font-black text-xs transition flex items-center justify-center space-x-1 border border-amber-200">
+              <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+              <span>जावक (OUT)</span>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      lucide.createIcons();
+    }
+
+    function checkLowStockAlerts() {
+      const lowItems = materials.filter(m => m.stock <= m.minAlert);
+      const banner = document.getElementById('lowStockBanner');
+      const details = document.getElementById('lowStockDetails');
+
+      if (lowItems.length > 0) {
+        banner.classList.remove('hidden');
+        const names = lowItems.map(m => `${m.nameHi} (${m.stock} ${m.primaryUnit})`).join(', ');
+        details.innerText = `कम मात्रा चेतावनी: ${names}. कृपया सप्लायर से आर्डर लगाएं।`;
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    function getCategoryBadge(cat) {
+      switch (cat) {
+        case 'Cement': return 'bg-amber-100 text-amber-800 border border-amber-200';
+        case 'Gitti': return 'bg-blue-100 text-blue-800 border border-blue-200';
+        case 'Morang': return 'bg-orange-100 text-orange-800 border border-orange-200';
+        case 'Sariya': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+        case 'Ring': return 'bg-purple-100 text-purple-800 border border-purple-200';
+        default: return 'bg-slate-100 text-slate-700';
+      }
+    }
+
+    function populateMaterialDropdowns() {
+      const inSelect = document.getElementById('modalInMaterialSelect');
+      const outSelect = document.getElementById('modalOutMaterialSelect');
+      const ledgerSelect = document.getElementById('ledgerFilterMaterial');
+
+      const curIn = inSelect.value;
+      const curOut = outSelect.value;
+      const curLed = ledgerSelect.value;
+
+      inSelect.innerHTML = '';
+      outSelect.innerHTML = '';
+      ledgerSelect.innerHTML = '<option value="ALL">All Materials (सभी सामग्री)</option>';
+
+      materials.forEach(m => {
+        // IN
+        const optIn = document.createElement('option');
+        optIn.value = m.id;
+        optIn.textContent = `${m.nameHi} [Stock: ${m.stock} ${m.primaryUnit}]`;
+        inSelect.appendChild(optIn);
+
+        // OUT
+        const optOut = document.createElement('option');
+        optOut.value = m.id;
+        optOut.textContent = `${m.nameHi} [Stock: ${m.stock} ${m.primaryUnit}]`;
+        outSelect.appendChild(optOut);
+
+        // Ledger filter
+        const optLed = document.createElement('option');
+        optLed.value = m.id;
+        optLed.textContent = m.nameHi;
+        ledgerSelect.appendChild(optLed);
+      });
+
+      if (curIn && materials.some(m => m.id === curIn)) inSelect.value = curIn;
+      if (curOut && materials.some(m => m.id === curOut)) outSelect.value = curOut;
+      if (curLed) ledgerSelect.value = curLed;
+
+      handleModalUnitUpdate('modalInMaterialSelect', 'modalInUnitLabel');
+      handleModalUnitUpdate('modalOutMaterialSelect', 'modalOutUnitLabel');
+    }
+
+    function handleModalUnitUpdate(selectId, labelId) {
+      const sel = document.getElementById(selectId);
+      const label = document.getElementById(labelId);
+      const hint = document.getElementById('modalOutStockHint');
+      if (!sel || !label) return;
+
+      const item = materials.find(m => m.id === sel.value);
+      if (item) {
+        label.innerText = `(${item.primaryUnitHi})`;
+        if (hint && selectId === 'modalOutMaterialSelect') {
+          hint.innerText = `वर्तमान स्टॉक: ${item.stock} ${item.primaryUnitHi}`;
+        }
+      }
+    }
+
+    function triggerQuickAction(materialId, type) {
+      if (type === 'IN') {
+        openModal('modalStockIn');
+        const sel = document.getElementById('modalInMaterialSelect');
+        if (sel) {
+          sel.value = materialId;
+          handleModalUnitUpdate('modalInMaterialSelect', 'modalInUnitLabel');
+        }
+      } else {
+        openModal('modalStockOut');
+        const sel = document.getElementById('modalOutMaterialSelect');
+        if (sel) {
+          sel.value = materialId;
+          handleModalUnitUpdate('modalOutMaterialSelect', 'modalOutUnitLabel');
+        }
+      }
+    }
+
+    function handleTransactionSubmit(e, type) {
+      e.preventDefault();
+
+      const isIN = type === 'IN';
+      const matSelectId = isIN ? 'modalInMaterialSelect' : 'modalOutMaterialSelect';
+      const qtyId = isIN ? 'modalInQty' : 'modalOutQty';
+      const refId = isIN ? 'modalInRef' : 'modalOutRef';
+      const partyId = isIN ? 'modalInParty' : 'modalOutParty';
+      const vehId = isIN ? 'modalInVehicle' : 'modalOutVehicle';
+      const noteId = isIN ? 'modalInNotes' : 'modalOutNotes';
+
+      const matId = document.getElementById(matSelectId).value;
+      const qty = parseFloat(document.getElementById(qtyId).value);
+      const ref = document.getElementById(refId).value.trim();
+      const party = document.getElementById(partyId).value.trim();
+      const vehicle = document.getElementById(vehId).value.trim();
+      const notes = document.getElementById(noteId).value.trim();
+
+      if (!matId || isNaN(qty) || qty <= 0) {
+        showToast('Incomplete', 'Please enter a valid positive quantity.', 'error');
+        return;
+      }
+
+      const matIndex = materials.findIndex(m => m.id === matId);
+      if (matIndex === -1) return;
+
+      const mat = materials[matIndex];
+      let newBalance = Number(mat.stock);
+
+      if (isIN) {
+        newBalance += qty;
+      } else {
+        if (newBalance < qty) {
+          showToast('पर्याप्त स्टॉक नहीं!', `Only ${newBalance} ${mat.primaryUnitHi} available in stock.`, 'error');
+          return;
+        }
+        newBalance -= qty;
+      }
+
+      // Update Stock
+      materials[matIndex].stock = parseFloat(newBalance.toFixed(2));
+
+      // Create Ledger Entry
+      const newEntry = {
+        id: 'led_' + Date.now(),
+        timestamp: new Date().toISOString(),
+        materialId: mat.id,
+        materialName: mat.nameHi,
+        type: type,
+        qty: qty,
+        unit: mat.primaryUnit,
+        balance: materials[matIndex].stock,
+        party: party || (isIN ? 'Plant Depot' : 'Cash Customer'),
+        vehicle: vehicle || '-',
+        ref: ref || '-',
+        notes: notes || '-'
+      };
+
+      ledger.unshift(newEntry);
+      saveStorageData();
+      renderAll();
+
+      closeModal(isIN ? 'modalStockIn' : 'modalStockOut');
+      document.getElementById(qtyId).value = '';
+      document.getElementById(refId).value = '';
+      document.getElementById(vehId).value = '';
+
+      showToast(
+        isIN ? 'आवक दर्ज (Stock IN)' : 'जावक दर्ज (Stock OUT)',
+        `${mat.nameHi}: ${qty} ${mat.primaryUnit} updated. New Balance: ${materials[matIndex].stock} ${mat.primaryUnit}`
+      );
+    }
+
+    function calculateVehicleCFT() {
+      const lenFt = parseFloat(document.getElementById('calcLenFeet').value) || 0;
+      const lenIn = parseFloat(document.getElementById('calcLenInch').value) || 0;
+      const widFt = parseFloat(document.getElementById('calcWidthFeet').value) || 0;
+      const widIn = parseFloat(document.getElementById('calcWidthInch').value) || 0;
+      const hgtFt = parseFloat(document.getElementById('calcHeightFeet').value) || 0;
+      const hgtIn = parseFloat(document.getElementById('calcHeightInch').value) || 0;
+
+      const totalLenInches = (lenFt * 12) + lenIn;
+      const totalWidInches = (widFt * 12) + widIn;
+      const totalHgtInches = (hgtFt * 12) + hgtIn;
+
+      // CFT = (L_inch * W_inch * H_inch) / 1728
+      const volumeCFT = (totalLenInches * totalWidInches * totalHgtInches) / 1728;
+      const volumeBrass = volumeCFT / 100;
+
+      document.getElementById('calcResultCFT').innerText = volumeCFT.toFixed(2);
+      document.getElementById('calcResultBrass').innerText = volumeBrass.toFixed(2);
+
+      return parseFloat(volumeCFT.toFixed(2));
+    }
+
+    function transferCalcToStock(type) {
+      const cft = calculateVehicleCFT();
+      if (cft <= 0) {
+        showToast('Invalid Dimensions', 'Please verify trolley dimensions.', 'error');
+        return;
+      }
+
+      if (type === 'IN') {
+        openModal('modalStockIn');
+        const qInput = document.getElementById('modalInQty');
+        if (qInput) qInput.value = cft;
+        showToast('Transferred', `${cft} CFT copied to Stock IN quantity field.`);
+      } else {
+        openModal('modalStockOut');
+        const qInput = document.getElementById('modalOutQty');
+        if (qInput) qInput.value = cft;
+        showToast('Transferred', `${cft} CFT copied to Stock OUT quantity field.`);
+      }
+    }
+
+    function renderLedgerTable() {
+      const typeFilter = document.getElementById('ledgerFilterType').value;
+      const matFilter = document.getElementById('ledgerFilterMaterial').value;
+      const tbody = document.getElementById('ledgerTableBody');
+      tbody.innerHTML = '';
+
+      const filtered = ledger.filter(item => {
+        const matchesType = typeFilter === 'ALL' || item.type === typeFilter;
+        const matchesMat = matFilter === 'ALL' || item.materialId === matFilter;
+        return matchesType && matchesMat;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="text-center py-8 text-slate-400 font-medium">
+              No transactions recorded for selected filter.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filtered.forEach(log => {
+        const isIN = log.type === 'IN';
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-slate-50 transition';
+
+        row.innerHTML = `
+          <td class="py-3 px-3 font-mono text-slate-500 whitespace-nowrap">${formatDate(log.timestamp)}</td>
+          <td class="py-3 px-2 text-center">
+            <span class="inline-block px-2 py-0.5 rounded font-black text-[10px] ${isIN ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+              ${isIN ? 'आवक (IN)' : 'जावक (OUT)'}
+            </span>
+          </td>
+          <td class="py-3 px-3 font-bold text-slate-900">${log.materialName}</td>
+          <td class="py-3 px-3 text-right font-mono font-bold ${isIN ? 'text-emerald-600' : 'text-amber-700'}">
+            ${isIN ? '+' : '-'}${Number(log.qty).toLocaleString()} <span class="text-[10px] font-sans text-slate-400">${log.unit}</span>
+          </td>
+          <td class="py-3 px-3 text-right font-mono font-bold text-slate-800">
+            ${Number(log.balance).toLocaleString()} <span class="text-[10px] font-sans text-slate-400">${log.unit}</span>
+          </td>
+          <td class="py-3 px-3 text-slate-700 max-w-[130px] truncate">${log.party || '-'}</td>
+          <td class="py-3 px-3 font-mono text-slate-600 uppercase whitespace-nowrap">${log.vehicle || '-'}</td>
+          <td class="py-3 px-3 font-mono text-slate-500 whitespace-nowrap">${log.ref || '-'}</td>
+          <td class="py-3 px-3 text-slate-400 text-[11px] max-w-[160px] truncate">${log.notes || '-'}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function exportLedgerCSV() {
+      if (ledger.length === 0) {
+        showToast('Empty', 'Ledger has no data to export.', 'info');
+        return;
+      }
+
+      let csv = 'Timestamp,Type,Material_Name,Quantity,Unit,Stock_Balance_After,Party_Customer_Supplier,Vehicle_Number,Challan_Pass_No,Notes\n';
+
+      ledger.forEach(l => {
+        const row = [
+          `"${l.timestamp}"`,
+          `"${l.type}"`,
+          `"${(l.materialName || '').replace(/"/g, '""')}"`,
+          l.qty,
+          `"${l.unit}"`,
+          l.balance,
+          `"${(l.party || '').replace(/"/g, '""')}"`,
+          `"${(l.vehicle || '').replace(/"/g, '""')}"`,
+          `"${(l.ref || '').replace(/"/g, '""')}"`,
+          `"${(l.notes || '').replace(/"/g, '""')}"`
+        ];
+        csv += row.join(',') + '\n';
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `NirmanTrack_Depot_Ledger_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('Exported', 'Ledger CSV downloaded successfully.');
+    }
+
+    function downloadBackupJSON() {
+      const dump = {
+        app: 'NirmanTrack',
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        materials,
+        ledger
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dump, null, 2));
+      const a = document.createElement('a');
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", `NirmanTrack_Backup_${new Date().toISOString().slice(0, 10)}.json`);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('Backup Created', 'Offline JSON backup downloaded.');
+    }
+
+    function restoreBackupJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          if (parsed.materials && Array.isArray(parsed.materials)) {
+            materials = parsed.materials;
+            ledger = Array.isArray(parsed.ledger) ? parsed.ledger : [];
+            saveStorageData();
+            renderAll();
+            showToast('Restored', 'Depot records restored successfully.');
+          } else {
+            showToast('Error', 'Invalid backup format.', 'error');
+          }
+        } catch (err) {
+          showToast('Error', 'Failed to read JSON backup.', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetToDefaultData() {
+      if (confirm('Reset to initial sample depot stock?')) {
+        materials = JSON.parse(JSON.stringify(INITIAL_MATERIALS));
+        ledger = JSON.parse(JSON.stringify(INITIAL_LEDGER));
+        saveStorageData();
+        renderAll();
+        showToast('Reset Complete', 'Standard construction stock restored.');
+      }
+    }
+
+    function clearAllData() {
+      if (confirm('Clear all materials and transaction history? This cannot be undone.')) {
+        materials = materials.map(m => ({ ...m, stock: 0 }));
+        ledger = [];
+        saveStorageData();
+        renderAll();
+        showToast('Cleared', 'All balances set to zero.', 'info');
+      }
+    }
+
+    function clearLedgerHistory() {
+      if (confirm('Clear ledger history logs only? Live stock counts will remain unchanged.')) {
+        ledger = [];
+        saveStorageData();
+        renderAll();
+        showToast('Ledger Cleared', 'Historical activity logs deleted.', 'info');
+      }
+    }
+
+    // Modal Helpers
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    }
+
+    // Toast Notifications
+    let toastTimer;
+    function showToast(title, msg, type = 'success') {
+      const toast = document.getElementById('toastNotification');
+      const tTitle = document.getElementById('toastTitle');
+      const tMsg = document.getElementById('toastMessage');
+      const tIcon = document.getElementById('toastIcon');
+
+      tTitle.innerText = title;
+      tMsg.innerText = msg;
+
+      if (type === 'error') {
+        tIcon.className = 'p-2 rounded-xl bg-rose-500/20 text-rose-400 shrink-0 mt-0.5';
+        tIcon.innerHTML = `<i data-lucide="alert-circle" class="w-5 h-5"></i>`;
+      } else if (type === 'info') {
+        tIcon.className = 'p-2 rounded-xl bg-sky-500/20 text-sky-400 shrink-0 mt-0.5';
+        tIcon.innerHTML = `<i data-lucide="info" class="w-5 h-5"></i>`;
+      } else {
+        tIcon.className = 'p-2 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0 mt-0.5';
+        tIcon.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i>`;
+      }
+
+      toast.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+      lucide.createIcons();
+
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        hideToast();
+      }, 3500);
+    }
+
+    function hideToast() {
+      const toast = document.getElementById('toastNotification');
+      toast.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+    }
+
+    // Formatting utilities
+    function formatDate(isoStr) {
+      if (!isoStr) return '-';
+      const d = new Date(isoStr);
+      return d.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+  </script>
+</body>
+</html>
